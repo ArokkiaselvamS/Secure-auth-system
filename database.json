@@ -1,0 +1,15 @@
+{
+  "users": [
+    {
+      "id": "30ed5274-7ba0-4b8d-a7a2-bc015bf090bc",
+      "name": "surya",
+      "email": "aroraj3817@gmail.com",
+      "password": "$2b$12$Bzjfep6UGOdQh9IIVAtqBekpkwtRj26fwfUcCChYfN1yNHQVcBMGG",
+      "resetToken": null,
+      "tokenExpiry": null,
+      "createdAt": "2026-05-25T04:02:02.677Z",
+      "resetOtp": null,
+      "otpExpiry": null
+    }
+  ]
+}

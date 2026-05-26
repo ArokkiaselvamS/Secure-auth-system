@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AuthSystem</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Variables ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0a0a0f;
+      --surface:     #111118;
+      --border:      #1e1e2e;
+      --border-lit:  #2e2e4a;
+      --accent:      #7c6af7;
+      --accent-2:    #3ecfcf;
+      --accent-glow: rgba(124,106,247,0.35);
+      --text:        #e2e0ff;
+      --muted:       #6b6a8a;
+      --danger:      #f87171;
+      --success:     #34d399;
+      --card-bg:     rgba(17,17,24,0.92);
+      --mono:        "DM Mono", monospace;
+      --display:     "Syne", sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--display);
+      overflow-x: hidden;
+    }
+
+    /* ── Background Grid ───────────────────────────────── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,106,247,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,106,247,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      top: -30%;
+      left: -20%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(ellipse at center, rgba(124,106,247,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ────────────────────────────────────────── */
+    #app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    /* ── Card ──────────────────────────────────────────── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 44px;
+      width: 100%;
+      max-width: 440px;
+      backdrop-filter: blur(24px);
+      box-shadow:
+        0 0 0 1px rgba(124,106,247,0.08),
+        0 24px 64px rgba(0,0,0,0.6),
+        0 0 80px rgba(124,106,247,0.04);
+      animation: cardIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes cardIn {
+      from { opacity:0; transform: translateY(24px) scale(0.97); }
+      to   { opacity:1; transform: translateY(0)   scale(1); }
+    }
+
+    /* ── Brand ─────────────────────────────────────────── */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .brand-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .brand-name {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, var(--text), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Section Heading ───────────────────────────────── */
+    .section-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .section-sub {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+    .section-sub span { color: var(--accent); }
+
+    /* ── Form Elements ─────────────────────────────────── */
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .field input {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,106,247,0.15);
+    }
+    .field input::placeholder { color: #3a3a5a; }
+
+    /* ── Button ────────────────────────────────────────── */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-family: var(--display);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #9b6cf7);
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(124,106,247,0.35);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 32px rgba(124,106,247,0.5);
+    }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .btn-ghost:hover {
+      border-color: var(--border-lit);
+      color: var(--text);
+      background: rgba(255,255,255,0.03);
+    }
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(239,68,68,0.3);
+    }
+    .btn-danger:hover { transform: translateY(-1px); }
+
+    /* ── Alert/Toast ───────────────────────────────────── */
+    .alert {
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: var(--mono);
+      font-size: 13px;
+      margin-bottom: 20px;
+      display: none;
+      line-height: 1.5;
+      animation: alertIn 0.25s ease both;
+    }
+    @keyframes alertIn {
+      from { opacity:0; transform: translateY(-6px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .alert.show { display: block; }
+    .alert-error   { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--danger); }
+    .alert-success { background: rgba(52,211,153,0.1);  border: 1px solid rgba(52,211,153,0.3);  color: var(--success); }
+    .alert-info    { background: rgba(124,106,247,0.1); border: 1px solid rgba(124,106,247,0.3); color: var(--accent); }
+
+    /* ── Link ──────────────────────────────────────────── */
+    .link-row {
+      margin-top: 24px;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .link {
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      background: none;
+      border: none;
+      font: inherit;
+      padding: 0;
+    }
+    .link:hover { text-decoration: underline; }
+
+    /* ── Dashboard ─────────────────────────────────────── */
+    #dashboard-section { max-width: 640px; }
+    .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .dash-greeting {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+    }
+    .dash-greeting span {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .info-tile {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+    }
+    .info-tile-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .info-tile-value {
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--success);
+      background: rgba(52,211,153,0.06);
+      border: 1px solid rgba(52,211,153,0.2);
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 24px;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity:1; }
+      50%       { opacity:0.5; }
+    }
+
+    .logout-btn {
+      width: auto;
+      padding: 10px 20px;
+      font-size: 13px;
+    }
+
+    /* ── Divider ───────────────────────────────────────── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 24px 0;
+    }
+
+    /* ── Spinner ───────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Section Visibility ────────────────────────────── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── Nav Tabs ──────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+      gap: 4px;
+    }
+    .tab {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(124,106,247,0.4);
+    }
+    .tab:not(.active):hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+    /* ── Token display ─────────────────────────────────── */
+    .token-box {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      word-break: break-all;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+    .token-box b { color: var(--accent-2); }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── AUTH SECTION ──────────────────────────────────────── -->
+  <div id="auth-section" class="card section active">
+    <div class="brand">
+      <div class="brand-icon">🔐</div>
+      <div class="brand-name">AuthSystem</div>
+    </div>
+
+    <!-- Tabs: Login / Register -->
+    <div class="tabs" id="auth-tabs">
+      <button class="tab active" onclick="switchTab('login')">Login</button>
+      <button class="tab"        onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- Alert -->
+    <div class="alert" id="auth-alert"></div>
+
+    <!-- ── Login Form ── -->
+    <div id="login-form">
+      <h2 class="section-title">Welcome back</h2>
+      <p class="section-sub">Sign in to your account <span>→</span></p>
+
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" />
+      </div>
+
+      <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+      <div class="link-row">
+        <button class="link" onclick="showSection('forgot')">Forgot your password?</button>
+      </div>
+    </div>
+
+    <!-- ── Register Form ── -->
+    <div id="register-form" style="display:none">
+      <h2 class="section-title">Create account</h2>
+      <p class="section-sub">Join <span>AuthSystem</span> — it's free</p>
+
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="reg-name" placeholder="Jane Doe" />
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label>Password <span style="color:var(--muted);font-size:11px">(min 6 chars)</span></label>
+        <input type="password" id="reg-password" placeholder="••••••••" />
+      </div>
+
+      <button class="btn btn-primary" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+
+  <!-- ── FORGOT PASSWORD SECTION ───────────────────────────── -->
+  <div id="forgot-section" class="card section">
+    <div class="brand">
+      <div class="brand-icon">📧</div>
+      <div class="brand-name">AuthSystem</div>
+    </div>
+
+    <h2 class="section-title">Forgot password</h2>
+    <p class="section-sub">Enter your email to get a 6-digit OTP code <span>→</span></p>
+
+    <div class="alert" id="forgot-alert"></div>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="forgot-email" placeholder="you@example.com" />
+    </div>
+
+    <button class="btn btn-primary" onclick="doForgotPassword()">Send OTP</button>
+    <button class="btn btn-ghost" onclick="showSection('auth')">← Back to Login</button>
+  </div>
+
+  <!-- ── RESET PASSWORD SECTION ────────────────────────────── -->
+  <div id="reset-section" class="card section">
+    <div class="brand">
+      <div class="brand-icon">🔑</div>
+      <div class="brand-name">AuthSystem</div>
+    </div>
+
+    <h2 class="section-title">Reset password</h2>
+    <p class="section-sub">Enter OTP code and your new password <span>→</span></p>
+
+    <div class="alert" id="reset-alert"></div>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="reset-email" placeholder="you@example.com" />
+    </div>
+    <div class="field">
+      <label>OTP Code</label>
+      <input type="text" id="reset-otp" placeholder="••••••" maxlength="6" style="letter-spacing: 0.25em; text-align: center; font-size: 18px; font-weight: bold;" />
+    </div>
+    <div class="field">
+      <label>New Password</label>
+      <input type="password" id="reset-password" placeholder="••••••••" />
+    </div>
+    <div class="field">
+      <label>Confirm Password</label>
+      <input type="password" id="reset-confirm" placeholder="••••••••" />
+    </div>
+
+    <button class="btn btn-primary" onclick="doResetPassword()">Reset Password</button>
+    <button class="btn btn-ghost" onclick="showSection('auth')">← Back to Login</button>
+  </div>
+
+  <!-- ── DASHBOARD SECTION ──────────────────────────────────── -->
+  <div id="dashboard-section" class="card section">
+    <div class="dash-header">
+      <div>
+        <div class="brand" style="margin-bottom:12px">
+          <div class="brand-icon">🔐</div>
+          <div class="brand-name">AuthSystem</div>
+        </div>
+        <div class="dash-greeting" id="dash-greeting">Hello, <span>User</span> 👋</div>
+      </div>
+      <button class="btn btn-danger logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      Authenticated — JWT token active (2-hour session)
+    </div>
+
+    <div class="alert" id="dash-alert"></div>
+
+    <div class="info-grid">
+      <div class="info-tile">
+        <div class="info-tile-label">Name</div>
+        <div class="info-tile-value" id="dash-name">—</div>
+      </div>
+      <div class="info-tile">
+        <div class="info-tile-label">Email</div>
+        <div class="info-tile-value" id="dash-email">—</div>
+      </div>
+      <div class="info-tile">
+        <div class="info-tile-label">User ID</div>
+        <div class="info-tile-value" id="dash-id" style="font-size:11px">—</div>
+      </div>
+      <div class="info-tile">
+        <div class="info-tile-label">Member Since</div>
+        <div class="info-tile-value" id="dash-created">—</div>
+      </div>
+    </div>
+    <hr class="divider" />
+
+    <button class="btn btn-primary" onclick="loadDashboard()" style="margin-bottom:8px">
+      🔄 Refresh Dashboard Data
+    </button>
+    <button class="btn btn-ghost" onclick="doLogout()">Logout &amp; Clear Session</button>
+  </div>
+
+</div>
+
+<!-- ── SCRIPTS ───────────────────────────────────────────────── -->
+<script>
+  const API    = "http://localhost:3000";
+
+  // ── Routing ──────────────────────────────────────────────
+  function showSection(name) {
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    document.getElementById(name + "-section").classList.add("active");
+    clearAlerts();
+  }
+
+  function switchTab(tab) {
+    const tabs = document.querySelectorAll(".tab");
+    tabs[0].classList.toggle("active", tab === "login");
+    tabs[1].classList.toggle("active", tab === "register");
+    document.getElementById("login-form").style.display    = tab === "login"    ? "block" : "none";
+    document.getElementById("register-form").style.display = tab === "register" ? "block" : "none";
+    clearAlerts();
+  }
+
+  // ── Alerts ───────────────────────────────────────────────
+  function showAlert(id, type, msg) {
+    const el = document.getElementById(id);
+    el.className = `alert alert-${type} show`;
+    el.textContent = msg;
+  }
+  function clearAlerts() {
+    document.querySelectorAll(".alert").forEach(a => { a.className = "alert"; a.textContent = ""; });
+  }
+
+  // ── Button loading state ──────────────────────────────────
+  function setLoading(btn, loading, defaultText) {
+    btn.disabled = loading;
+    btn.innerHTML = loading
+      ? `<span class="spinner"></span> Please wait…`
+      : defaultText;
+  }
+
+  // ── On page load — check JWT ──────────────────────────────
+  window.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("jwt");
+    if (token) {
+      showSection("dashboard");
+      loadDashboard();
+    }
+  });
+
+  // ── Register ─────────────────────────────────────────────
+  async function doRegister() {
+    const btn  = event.currentTarget;
+    const name = document.getElementById("reg-name").value.trim();
+    const email= document.getElementById("reg-email").value.trim();
+    const pass = document.getElementById("reg-password").value;
+
+    if (!name || !email || !pass) {
+      return showAlert("auth-alert", "error", "All fields are required.");
+    }
+
+    setLoading(btn, true, "Create Account");
+    try {
+      const res  = await fetch(`${API}/register`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ name, email, password: pass })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Registration failed.");
+
+      showAlert("auth-alert", "success", data.message + " Switching to login…");
+      document.getElementById("reg-name").value     = "";
+      document.getElementById("reg-email").value    = email;
+      document.getElementById("reg-password").value = "";
+      setTimeout(() => switchTab("login"), 1800);
+    } catch (err) {
+      showAlert("auth-alert", "error", err.message);
+    } finally {
+      setLoading(btn, false, "Create Account");
+    }
+  }
+
+  // ── Login ─────────────────────────────────────────────────
+  async function doLogin() {
+    const btn   = event.currentTarget;
+    const email = document.getElementById("login-email").value.trim();
+    const pass  = document.getElementById("login-password").value;
+
+    if (!email || !pass) return showAlert("auth-alert", "error", "Email and password are required.");
+
+    setLoading(btn, true, "Sign In");
+    try {
+      const res  = await fetch(`${API}/login`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ email, password: pass })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Login failed.");
+
+      localStorage.setItem("jwt", data.token);
+      showSection("dashboard");
+      loadDashboard();
+    } catch (err) {
+      showAlert("auth-alert", "error", err.message);
+    } finally {
+      setLoading(btn, false, "Sign In");
+    }
+  }
+
+  // ── Forgot Password ───────────────────────────────────────
+  async function doForgotPassword() {
+    const btn   = event.currentTarget;
+    const email = document.getElementById("forgot-email").value.trim();
+    if (!email) return showAlert("forgot-alert", "error", "Please enter your email.");
+
+    setLoading(btn, true, "Send OTP");
+    try {
+      const res  = await fetch(`${API}/forgot-password`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Request failed.");
+
+      document.getElementById("reset-email").value = email;
+      document.getElementById("reset-otp").value = "";
+      document.getElementById("reset-password").value = "";
+      document.getElementById("reset-confirm").value = "";
+      showSection("reset");
+      showAlert("reset-alert", "success", "OTP sent! Please check your email and enter the code below.");
+    } catch (err) {
+      showAlert("forgot-alert", "error", err.message);
+    } finally {
+      setLoading(btn, false, "Send OTP");
+    }
+  }
+
+  // ── Reset Password ────────────────────────────────────────
+  async function doResetPassword() {
+    const btn  = event.currentTarget;
+    const email = document.getElementById("reset-email").value.trim();
+    const otp  = document.getElementById("reset-otp").value.trim();
+    const pass = document.getElementById("reset-password").value;
+    const conf = document.getElementById("reset-confirm").value;
+
+    if (!email)          return showAlert("reset-alert", "error", "Email is required.");
+    if (!otp)            return showAlert("reset-alert", "error", "OTP is required.");
+    if (otp.length !== 6) return showAlert("reset-alert", "error", "OTP must be 6 digits.");
+    if (!pass || !conf)  return showAlert("reset-alert", "error", "Both password fields are required.");
+    if (pass !== conf)   return showAlert("reset-alert", "error", "Passwords do not match.");
+    if (pass.length < 6) return showAlert("reset-alert", "error", "Password must be at least 6 characters.");
+
+    setLoading(btn, true, "Reset Password");
+    try {
+      const res  = await fetch(`${API}/reset-password`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ email, otp, password: pass })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Reset failed.");
+
+      showAlert("reset-alert", "success", data.message + " Redirecting to login…");
+      document.getElementById("reset-otp").value = "";
+      document.getElementById("reset-password").value = "";
+      document.getElementById("reset-confirm").value = "";
+      setTimeout(() => showSection("auth"), 2000);
+    } catch (err) {
+      showAlert("reset-alert", "error", err.message);
+    } finally {
+      setLoading(btn, false, "Reset Password");
+    }
+  }
+
+  // ── Dashboard ─────────────────────────────────────────────
+  async function loadDashboard() {
+    const token = localStorage.getItem("jwt");
+    if (!token) { showSection("auth"); return; }
+
+    try {
+      const res  = await fetch(`${API}/dashboard`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Token expired or invalid
+        localStorage.removeItem("jwt");
+        showSection("auth");
+        showAlert("auth-alert", "error", "Session expired. Please log in again.");
+        return;
+      }
+
+      const u = data.user;
+      const dateObj = new Date(u.createdAt);
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const firstFour = u.name.replace(/\s+/g, '').substring(0, 4).toUpperCase().padEnd(4, 'X');
+      const formattedUserId = `${firstFour}${day}${month}`;
+
+      document.getElementById("dash-greeting").innerHTML =
+        `Hello, <span>${u.name}</span> 👋`;
+      document.getElementById("dash-name").textContent    = u.name;
+      document.getElementById("dash-email").textContent   = u.email;
+      document.getElementById("dash-id").textContent      = formattedUserId;
+      document.getElementById("dash-created").textContent =
+        new Date(u.createdAt).toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" });
+    } catch (err) {
+      showAlert("dash-alert", "error", "Could not connect to server.");
+    }
+  }
+
+  // ── Logout ────────────────────────────────────────────────
+  function doLogout() {
+    localStorage.removeItem("jwt");
+    showSection("auth");
+    switchTab("login");
+    showAlert("auth-alert", "info", "You have been logged out.");
+  }
+
+  // ── Enter key support ─────────────────────────────────────
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    const active = document.querySelector(".section.active")?.id;
+    if (active === "auth-section") {
+      const isLogin = document.getElementById("login-form").style.display !== "none";
+      isLogin ? doLogin() : doRegister();
+    } else if (active === "forgot-section")    doForgotPassword();
+    else if (active === "reset-section")       doResetPassword();
+  });
+</script>
+</body>
+</html>
